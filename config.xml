@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="br.seuprojeto.ctrlprodutos" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+  <name>ControleProdutos</name>
+  <description>Controle de Produtos — Salão / Cozinha / Bar</description>
+  <author email="seu@email.com">Seu Nome</author>
+  <content src="index.html" />
+  <access origin="*" />
+  <allow-navigation href="*" />
+  <platform name="android">
+    <allow-intent href="market:*" />
+  </platform>
+
+  <preference name="SplashScreen" value="screen"/>
+  <preference name="SplashScreenDelay" value="3000"/>
+  <preference name="android-targetSdkVersion" value="33"/>
+  <preference name="DisallowOverscroll" value="true" />
+</widget>
