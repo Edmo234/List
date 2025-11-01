@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Controle de Produtos</title>
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#ff6b3d"/>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="css/Style.css">
+  <!-- jsPDF (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Cordova will inject cordova.js at build time (leave commented for dev in browser) -->
+  <!-- <script src="cordova.js"></script> -->
+
+  <script>
+    // Register service worker early for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="top-left">
+        <button id="backBtn" class="icon-btn hidden" title="Voltar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div>
+          <h1 id="topTitle">Salão</h1>
+          <small id="topSubtitle">Controle de Produtos</small>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <input id="search" placeholder="Buscar produto ou lista..." aria-label="Buscar produto ou lista" />
+        <button id="newListFab" class="fab" title="Nova lista" aria-label="Nova lista">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Views -->
+    <main class="view-area" id="mainContent" role="main">
+      <!-- Catalog view (Salão / Cozinha / Bar) -->
+      <section id="catalogView" class="view active" aria-live="polite">
+        <div id="productsGrid" class="products" tabindex="0"></div>
+      </section>
+
+      <!-- Lists view -->
+      <section id="listsView" class="view">
+        <div class="lists-header">
+          <h2>Listas salvas</h2>
+          <div class="list-actions">
+            <button id="exportBtn" class="btn">Exportar</button>
+            <label class="btn filebtn">Importar
+              <input id="importFile" type="file" accept="application/json" />
+            </label>
+          </div>
+        </div>
+        <div id="listsContainer"></div>
+      </section>
+
+      <!-- Config view -->
+      <section id="configView" class="view">
+        <h2>Configurações & Cadastro</h2>
+        <div class="card">
+          <h3>Cadastrar produto manualmente</h3>
+          <div class="formgrid">
+            <input id="manualName" placeholder="Nome do produto" />
+            <select id="manualSector">
+              <option value="salao">Salão</option>
+              <option value="cozinha">Cozinha</option>
+              <option value="bar">Bar</option>
+            </select>
+            <input id="manualStock" type="number" min="0" placeholder="Estoque (opcional)" />
+            <button id="addManualBtn" class="btn primary">Adicionar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Catálogo atual</h3>
+          <small class="muted">Você pode remover ou editar produtos aqui</small>
+          <div id="catalogList" class="catalog-list" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navegação">
+      <button class="tab active" data-tab="salao" title="Salão" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="1.5" fill="none"/></svg>
+        <span>Ad</span>
+     
+      <button class="tab" data-tab="listas" title="Listas" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="1.5" fill="none"/></svg>
+        <span>Listas</span>
+      </button>
+      <button class="tab" data-tab="config" title="Config" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7zM19.4 15a1.9 1.9 0 0 0 .1-1l1.8-1.4-2-3.5-2.1.5c-.3-.3-.7-.5-1.1-.7l-.3-2.2H9.6L9.3 8.9c-.4.1-.8.3-1.1.6L6.1 8.9 4.1 12.4 5.9 13.9a2 2 0 0 0-.1 1l-1.8 1.4 2 3.5 2.1-.5c.3.3.7.5 1.1.7l.3 2.2h4.8l.3-2.2c.4-.1.8-.3 1.1-.6l2.1.6 2-3.5z" fill="#fff"/></svg>
+        <span>Config</span>
+      </button>
+    </nav>
+
+    <!-- Editor sheet -->
+    <div id="editorSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="sheet-card">
+        <h3 id="sheetTitle">Nova Lista</h3>
+        <div class="formgrid">
+          <input id="sheetName" placeholder="Nome  (obrigatório)" />
+          <input id="sheetDate" type="date" />
+          <select id="sheetSector">
+            <option value="salao">Salão</option>
+            <option value="cozinha">Cozinha</option>
+            <option value="bar">Bar</option>
+          </select>
+        </div>
+
+        <div class="card-small">
+          <h4>Adicionar item</h4>
+          <div class="formgrid">
+            <select id="sheetProduct"></select>
+            <input id="sheetQty" type="number" min="1" value="1" />
+            <select id="sheetUnit">
+              <option value="und">Und</option><option value="kg">kg</option><option value="l">L</option><option value="cx">Caixa</option><option value="ml">ml</option>
+            </select>
+            <button id="sheetAddItem" class="btn primary">Adicionar</button>
+          </div>
+          <ul id="sheetItems" class="sheet-items" aria-live="polite"></ul>
+        </div>
+
+        <div class="sheet-actions">
+          <button id="sheetSave" class="btn primary">Salvar lista</button>
+          <button id="sheetCancel" class="btn">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/Script.js"></script>
+</body>
+</html>
